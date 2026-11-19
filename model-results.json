@@ -1,0 +1,26 @@
+{
+  "source": "docs/VALIDATION.md, partitioned plate-only PatchCore run 2026-11-15",
+  "new_evaluation_performed": false,
+  "model": "PatchCore / pretrained ResNet18 layer2 + layer3",
+  "training_clean_images": 661,
+  "validation_images": 26,
+  "test_images": 20,
+  "test_confusion": {
+    "tn": 12,
+    "fp": 4,
+    "fn": 3,
+    "tp": 1
+  },
+  "derived_test_metrics": {
+    "accuracy": 0.65,
+    "defect_recall": 0.25,
+    "clean_specificity": 0.75
+  },
+  "validation_defect_recall": 1.0,
+  "live_prediction_observation_ms": 26.55,
+  "inference_device": "Intel station CPU / OpenVINO",
+  "latency_is_single_observation": true,
+  "physical_sorting_success_measured": false,
+  "checkpoint_sha256": "6d8add3e0688a925092fe83413311393cc969e885c55de80f345cb7f96626a44",
+  "manifest_sha256": "5e1828e6e1a52e47db5f17caa0a0f9cbe5581882cb24b6fcf8638b7a6f7a2407"
+}

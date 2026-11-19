@@ -1,0 +1,256 @@
+[
+  {
+    "output": "media/hero-motion.mp4",
+    "source": "WhatsApp Video 2026-11-18 at 01.19.03 (5).mp4",
+    "segments_seconds": [
+      [
+        0.3,
+        3.8
+      ],
+      [
+        5.2,
+        8.6
+      ],
+      [
+        11,
+        14.2
+      ],
+      [
+        28.8,
+        33.5
+      ],
+      [
+        35.3,
+        39.5
+      ]
+    ],
+    "speed": 1,
+    "audio": false,
+    "editing": "Hard cuts remove pauses. Native motion speed retained."
+  },
+  {
+    "output": "media/grasp-motion.mp4",
+    "source": "WhatsApp Video 2026-11-18 at 01.19.03 (6).mp4",
+    "segments_seconds": [
+      [
+        0.4,
+        3.3
+      ],
+      [
+        10.6,
+        13
+      ],
+      [
+        15.1,
+        18.2
+      ],
+      [
+        19.4,
+        21.5
+      ]
+    ],
+    "speed": 1,
+    "audio": false,
+    "editing": "Hard cuts remove pauses. Native motion speed retained."
+  },
+  {
+    "output": "media/scan-motion.mp4",
+    "source": "WhatsApp Video 2026-11-18 at 01.19.04 (1).mp4",
+    "segments_seconds": [
+      [
+        0.4,
+        2.6
+      ],
+      [
+        4.2,
+        7.2
+      ],
+      [
+        23.2,
+        26.3
+      ]
+    ],
+    "speed": 1,
+    "audio": false,
+    "editing": "Hard cuts remove pauses. Native motion speed retained."
+  },
+  {
+    "output": "media/digital-twin.mp4",
+    "source": "WhatsApp Video 2026-11-18 at 01.19.03 (1).mp4",
+    "segments_seconds": [
+      [
+        0.7,
+        6.8
+      ],
+      [
+        12.5,
+        17.7
+      ]
+    ],
+    "speed": 1,
+    "audio": false,
+    "editing": "Hard cuts remove pauses. Native motion speed retained."
+  },
+  {
+    "output": "media/system-identification.mp4",
+    "source": "System Identification.mp4",
+    "segments_seconds": [
+      [
+        0,
+        4.1
+      ]
+    ],
+    "speed": 1,
+    "audio": false,
+    "editing": "Hard cuts remove pauses. Native motion speed retained."
+  },
+  {
+    "output": "media/lab-motion.mp4",
+    "source": "Timelapse 1.mp4",
+    "segments_seconds": [
+      [
+        1,
+        8
+      ],
+      [
+        10,
+        16
+      ],
+      [
+        25.5,
+        30.5
+      ]
+    ],
+    "speed": 1,
+    "audio": false,
+    "editing": "Selected excerpts from supplied timelapse; source timing is already accelerated."
+  },
+  {
+    "output": "media/twin-explainer.mp4",
+    "source": "demo_video.mp4",
+    "segments_seconds": [
+      [
+        104,
+        118
+      ]
+    ],
+    "speed": 1,
+    "audio": false,
+    "editing": "Hard cuts remove pauses. Native motion speed retained."
+  },
+  {
+    "output": "media/simulation-cycle.mp4",
+    "source": "SO101InspectionTwin + CogManInspectionAgent, local MuJoCo 4.0.1",
+    "synthetic": true,
+    "control_steps": 370,
+    "render_fps": 15,
+    "sample_every_control_steps": 2,
+    "editing": "Uncut simulated control sequence; no physical timing claim.",
+    "trained_anomaly_detector": false,
+    "physical_success_verified": false
+  },
+  {
+    "output": "media/inspection-montage.jpg",
+    "source": "media/scan-motion.mp4",
+    "sample_fps": 6,
+    "frames": 48,
+    "layout": "8 columns x 6 rows",
+    "training_samples": false,
+    "description": "Sampled physical demonstration frames, not the archived fitting dataset."
+  },
+  {
+    "output": "media/camera-reconstruction.mp4",
+    "source": "demo_video.mp4",
+    "segments_seconds": [
+      [
+        105,
+        114.5
+      ]
+    ],
+    "speed": 1,
+    "audio": false,
+    "editing": "Reconstruction excerpt only; end title card excluded."
+  },
+  {
+    "output": "media/matched-physical.mp4",
+    "source": "WhatsApp Video 2026-11-18 at 01.19.03 (6).mp4",
+    "segments_seconds": [
+      [
+        10.6,
+        13.0
+      ]
+    ],
+    "fps": 30,
+    "frames": 72,
+    "speed": 1,
+    "audio": false
+  },
+  {
+    "output": "media/matched-simulation.mp4",
+    "source": "Local MuJoCo model, fitted camera and reconstructed joint poses",
+    "synthetic": true,
+    "fps": 30,
+    "frames": 72,
+    "method": "Visual landmark fitting and optical flow, not joint telemetry; kinematic reconstruction, not dynamics validation",
+    "provenance": "media/matched-reconstruction.json"
+  },
+  {
+    "output": "media/matched-motion-real.mp4",
+    "source": "WhatsApp Video 2026-11-18 at 01.19.03 (5).mp4",
+    "source_sha256": "4dde79ab474366d7f5d34325dad446c3760d7f8926c7cecb92d67620e9a27db6",
+    "segments_seconds": [
+      [
+        28.8,
+        33.6
+      ]
+    ],
+    "frames": 144,
+    "fps": 30,
+    "speed": 1,
+    "audio": false
+  },
+  {
+    "output": "media/matched-motion-sim.mp4",
+    "synthetic": true,
+    "frames": 144,
+    "fps": 30,
+    "method": "Separate video-fitted display scene; both repository scene definitions reviewed and unchanged.",
+    "provenance": "media/matched-motion-provenance.json"
+  },
+  {
+    "output": "media/matched-pick-rotate-real.mp4",
+    "source": "WhatsApp Video 2026-11-18 at 01.19.03 (5).mp4",
+    "source_interval_seconds": [
+      16.8,
+      33.6
+    ],
+    "fps": 30,
+    "frames": 360,
+    "editing": "Continuous take. Source seconds 22\u201328.8 compressed into two output seconds."
+  },
+  {
+    "output": "media/matched-pick-rotate-sim.mp4",
+    "synthetic": true,
+    "fps": 30,
+    "frames": 360,
+    "provenance": "media/matched-pick-rotate.json"
+  },
+  {
+    "output": "media/matched-descent-real.mp4",
+    "source": "WhatsApp Video 2026-11-18 at 01.19.03 (5).mp4",
+    "source_sha256": "4dde79ab474366d7f5d34325dad446c3760d7f8926c7cecb92d67620e9a27db6",
+    "synthetic": false,
+    "frames": 504,
+    "fps": 30,
+    "provenance": "media/matched-descent.json"
+  },
+  {
+    "output": "media/matched-descent-sim.mp4",
+    "source": "WhatsApp Video 2026-11-18 at 01.19.03 (5).mp4",
+    "source_sha256": "4dde79ab474366d7f5d34325dad446c3760d7f8926c7cecb92d67620e9a27db6",
+    "synthetic": true,
+    "frames": 504,
+    "fps": 30,
+    "provenance": "media/matched-descent.json"
+  }
+]

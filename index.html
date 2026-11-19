@@ -1,325 +1,192 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Brickcell — Pick · Inspect · Sort</title>
-<meta name="description" content="An SO-101 robot arm that picks, inspects and sorts DUPLO bricks on its own, running entirely on CPUs. Intel Physical AI Challenge, Junction 2026.">
-<style>
-  :root{
-    --ink:#14101c; --soft:#5a5470; --faint:#8d87a3; --line:#e8e4f0;
-    --accent:#6d28d9; --accent-soft:#f3eeff; --good:#0e9f6e; --bad:#e0245e;
-    --card:#faf9fd;
-  }
-  *{box-sizing:border-box; margin:0; padding:0}
-  html{scroll-behavior:smooth}
-  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-       color:var(--ink); background:#fff; line-height:1.55; -webkit-font-smoothing:antialiased}
-  a{color:var(--accent); text-decoration:none}
-  a:hover{text-decoration:underline}
-  .wrap{max-width:960px; margin:0 auto; padding:0 24px}
-  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.92em}
-
-  nav{position:sticky; top:0; background:rgba(255,255,255,.9); backdrop-filter:blur(10px);
-      border-bottom:1px solid var(--line); z-index:10}
-  nav .wrap{display:flex; align-items:center; gap:26px; height:52px; font-size:14px}
-  nav .brand{font-weight:650; color:var(--ink)}
-  nav a{color:var(--soft)} nav a:hover{color:var(--ink); text-decoration:none}
-  nav .spacer{flex:1}
-  nav .tag{font-size:12px; color:var(--faint); letter-spacing:.04em}
-
-  header.hero{padding:96px 0 72px; text-align:left}
-  .kicker{font-size:13px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); font-weight:600}
-  .hero h1{font-size:64px; line-height:1.02; letter-spacing:-0.03em; font-weight:700; margin:14px 0 20px}
-  .hero h1 em{font-style:normal; color:var(--accent)}
-  .hero p.lede{font-size:21px; color:var(--soft); max-width:640px}
-  .hero .cta{margin-top:28px; display:flex; gap:14px; flex-wrap:wrap}
-  .btn{display:inline-block; padding:10px 20px; border-radius:8px; font-size:15px; font-weight:600;
-       border:1.5px solid var(--ink); color:var(--ink)}
-  .btn.primary{background:var(--ink); color:#fff}
-  .btn:hover{text-decoration:none; opacity:.85}
-  .affil{margin-top:44px; display:flex; align-items:center; gap:36px; flex-wrap:wrap}
-  .affil img{height:34px; filter:grayscale(1); opacity:.75}
-  .affil img:hover{filter:none; opacity:1}
-  .affil span{font-size:13px; color:var(--faint)}
-
-  section{padding:64px 0; border-top:1px solid var(--line)}
-  h2{font-size:32px; letter-spacing:-0.02em; font-weight:700; margin-bottom:18px}
-  h3{font-size:19px; font-weight:650; margin:34px 0 8px}
-  p.body{color:var(--soft); max-width:720px; font-size:16.5px}
-  p.body + p.body{margin-top:12px}
-  .num-steps{margin-top:36px}
-  .step{display:flex; gap:22px; padding:20px 0; border-top:1px solid var(--line)}
-  .step .n{font-size:28px; font-weight:300; color:var(--accent); min-width:40px; line-height:1}
-  .step h3{margin:0 0 4px; font-size:18px}
-  .step p{color:var(--soft); font-size:15.5px; max-width:640px}
-
-  figure{margin:32px 0}
-  figure video, figure img{width:100%; border-radius:12px; border:1px solid var(--line); display:block; background:#000}
-  figcaption{font-size:13px; color:var(--faint); margin-top:10px; text-align:center}
-  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:20px}
-  .grid3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px}
-  @media (max-width:760px){.grid2,.grid3{grid-template-columns:1fr} .hero h1{font-size:42px}}
-
-  .stat-row{display:flex; gap:48px; flex-wrap:wrap; margin:28px 0}
-  .stat .big{font-size:44px; font-weight:700; letter-spacing:-0.03em; color:var(--accent)}
-  .stat .lbl{font-size:14px; color:var(--soft); max-width:200px}
-
-  table.perf{width:100%; border-collapse:collapse; margin:24px 0; font-size:15px}
-  table.perf th{text-align:left; font-weight:600; color:var(--faint); font-size:12.5px;
-                text-transform:uppercase; letter-spacing:.06em; padding:10px 12px; border-bottom:2px solid var(--ink)}
-  table.perf td{padding:12px; border-bottom:1px solid var(--line); color:var(--soft)}
-  table.perf td:first-child{color:var(--ink); font-weight:600}
-  table.perf td b{color:var(--ink)}
-  .note{font-size:13px; color:var(--faint); margin-top:8px}
-
-  .pipeline{display:flex; align-items:stretch; gap:0; margin:36px 0; flex-wrap:wrap}
-  .pstage{flex:1; min-width:140px; background:var(--card); border:1px solid var(--line);
-          border-radius:12px; padding:18px 16px; position:relative}
-  .pstage + .pstage{margin-left:14px}
-  .pstage .ph{font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); font-weight:700}
-  .pstage .pt{font-weight:650; margin:6px 0 4px; font-size:15px}
-  .pstage .pd{font-size:13px; color:var(--soft); line-height:1.45}
-  .pstage.good{border-color:var(--good); background:#f0fdf8}
-  .pstage.good .ph{color:var(--good)}
-  .pstage.bad{border-color:var(--bad); background:#fef3f6}
-  .pstage.bad .ph{color:var(--bad)}
-
-  .card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:22px 24px}
-  .card h3{margin-top:0}
-
-  footer{padding:48px 0 72px; border-top:1px solid var(--line); color:var(--faint); font-size:14px}
-  footer .links{display:flex; gap:24px; margin-bottom:18px; flex-wrap:wrap}
-  .pill{display:inline-block; background:var(--accent-soft); color:var(--accent); font-size:12px;
-        font-weight:650; padding:2px 10px; border-radius:99px; letter-spacing:.03em}
-</style>
+<meta name="theme-color" content="#f8f7fc">
+<meta name="description" content="A robot arm that plans in symbols, moves by geometry and learns what a good part looks like from clean examples alone. It picks, inspects and sorts parts on an Intel CPU. Junction 2026, Intel Physical AI Challenge.">
+<meta property="og:title" content="Plans in symbols. Learns what normal looks like. — Junction 2026">
+<meta property="og:description" content="A SymSkill-inspired robot inspector: symbolic plans, monitored skills, an anomaly model fitted without a single defect label, and a physics twin rebuilt from one phone video.">
+<title>Plans in symbols. Learns what normal looks like. — Junction 2026</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css?v=junction13">
+<script src="site.js?v=12" defer></script>
 </head>
 <body>
-
-<nav>
-  <div class="wrap">
-    <a class="brand" href="#top">Brickcell</a>
-    <a href="#overview">Overview</a>
-    <a href="#method">Method</a>
-    <a href="#perception">Perception</a>
-    <a href="#inspection">Inspection</a>
-    <a href="#twin">Digital twin</a>
-    <a href="#runtime">Runtime</a>
-    <a href="#loop">Loop</a>
-    <span class="spacer"></span>
-    <span class="tag">Junction 2026</span>
-  </div>
-</nav>
-
-<header class="hero" id="top">
-  <div class="wrap">
-    <div class="kicker">Adaptive inspection &middot; model-based manipulation</div>
-    <h1>Pick. Analyse.<br>Sort. <em>End to end.</em></h1>
-    <p class="lede">A robot arm that picks every DUPLO brick off a plate, inspects it from seven
-    angles, and sorts good from defective &mdash; autonomously, entirely on CPUs.</p>
-    <div class="cta">
-      <a class="btn primary" href="https://github.com/ecemguvener/JunctionHack">Code</a>
-      <a class="btn" href="#method">How it works</a>
-      <a class="btn" href="#runtime">Runtime numbers</a>
+<a class="skip" href="#overview">Skip to content</a>
+<header class="topbar">
+  <nav class="shell" aria-label="Sections">
+    <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true">↗</span>Junction 2026</a>
+    <div class="nav-links">
+      <a href="#overview">Overview</a><a href="#architecture">Approach</a><a href="#data">How it learned</a><a href="#perception">Perception</a>
+      <a href="#simulation">Digital twin</a><a href="#inspection">Inspection</a><a href="#runtime">Runtime</a><a href="#open-source">Open source</a>
     </div>
-    <div class="affil">
-      <img src="media/uom.png" alt="The University of Manchester" title="The University of Manchester">
-      <img src="media/rca.png" alt="Royal College of Art" title="Royal College of Art">
-      <span>Intel Physical AI Challenge, Junction 2026 &middot; sponsored by Intel Robotics</span>
-    </div>
-  </div>
+    <a class="nav-code" href="https://github.com/ecemguvener/JunctionHack" aria-label="View project code">Code ↗</a>
+  </nav>
 </header>
+<main>
+  <section class="hero shell" id="top" aria-labelledby="hero-title">
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <div class="eyebrow">Intel Physical AI Challenge · Junction 2026</div>
+        <h1 id="hero-title">Plans in symbols.<br><span>Learns what normal looks like.</span></h1>
 
-<section id="overview">
-  <div class="wrap">
-    <h2>Overview</h2>
-    <p class="body">A plate of mixed DUPLO bricks lands in front of the arm. Point clouds find and
-    name every brick &mdash; even touching and stacked ones &mdash; a wrist camera servos the gripper
-    onto it, and the arm presents it to the inspection camera from seven scheduled views. A calibrated
-    PatchCore model scores each view, and the brick lands on the green plate or the pink plate.</p>
-    <p class="body">The pipeline is <b>model-based, not learned</b>: geometry, catalog priors and
-    calibrated anomaly distance drive every decision, so each one can be inspected, replayed and
-    falsified. Anything the cell cannot trust &mdash; a missing view, a stale frame, an absent
-    threshold &mdash; stops the sort instead of guessing.</p>
-    <div class="num-steps">
-      <div class="step"><div class="n">1</div><div>
-        <h3>Analytical pick&ndash;inspect&ndash;place architecture</h3>
-        <p>Closed-form 5-DOF grasp IK, measured arm dynamics and a scheduled 7-view wrist sweep.
-        No imitation data, no policy network &mdash; every action has an explicit reason.</p>
-      </div></div>
-      <div class="step"><div class="n">2</div><div>
-        <h3>Calibrated PatchCore inspection</h3>
-        <p>An Anomalib PatchCore model trained only on good bricks and calibrated on real
-        plate-camera images decides good vs. defective in raw patch distance &mdash; never a
-        probability.</p>
-      </div></div>
-      <div class="step"><div class="n">3</div><div>
-        <h3>A fitted digital twin</h3>
-        <p>A MuJoCo cell rebuilt from one depth camera: measured camera poses, CAD-derived arm
-        dynamics, KALAS plates. Perception and whole cycles were rehearsed there before hardware.</p>
-      </div></div>
+        <p class="lead">A low-cost SO-101 arm picks a part off a tray, turns it in front of a camera, decides whether it looks right, and sorts it. No human in the loop, no GPU, and no defect labels to learn from.</p>
+        <p class="hero-detail">A symbolic planner chooses each step and checks the world after every move. Geometry and two cameras guide the hand. The inspector learned “normal” from 661 clean images in under six minutes on a CPU.</p>
+        <div class="authors"><span>Faisal Lawan<sup>1</sup></span><span>Ecem Guvener<sup>1</sup></span><span>Jack Marshall<sup>1</sup></span><span>Daniel Jiang<sup>2</sup></span></div>
+        <p class="affiliation-key"><sup>1</sup> University of Manchester<br><sup>2</sup> Royal College of Art</p>
+        <div class="actions"><a class="button primary" href="https://github.com/ecemguvener/JunctionHack">Explore the code <span aria-hidden="true">↗</span></a><a class="button" href="#data">See how it learned <span aria-hidden="true">↓</span></a></div>      </div>
+<figure class="hero-film">
+        <div class="film-frame">
+          <video id="hero-video" src="media/hero-motion.mp4" poster="media/hero-motion.jpg" autoplay muted loop playsinline preload="auto" aria-label="Edited recording of the physical inspection cell handling and presenting parts"></video>
+          <div class="film-label"><span class="live-dot" aria-hidden="true"></span> Physical cell / SO-101</div>
+          <button class="film-toggle" data-video="hero-video" type="button" aria-label="Pause hero video">Pause</button>
+        </div>
+
+      </figure>    </div>
+    <div class="affiliation-strip">
+      <div class="university-logos"><img src="media/uom.png" width="193" height="60" alt="The University of Manchester"><img class="rca" src="media/rca.png" width="145" height="72" alt="Royal College of Art"></div>
+      <div class="intel-credit"><span>Intel Physical AI Challenge</span><img src="media/intel-logo.png" alt="Intel" loading="eager"></div>
     </div>
-    <div class="stat-row">
-      <div class="stat"><div class="big">7</div><div class="lbl">scheduled inspection views per brick, every one required valid</div></div>
-      <div class="stat"><div class="big">5.2 ms</div><div class="lbl">PatchCore OpenVINO inference on CPU</div></div>
-      <div class="stat"><div class="big">129 ms</div><div class="lbl">real-time perception on live depth clouds</div></div>
-      <div class="stat"><div class="big">0</div><div class="lbl">sorts allowed on untrusted evidence</div></div>
+  </section>
+
+  <section class="section shell" id="overview">
+    <div class="section-heading"><span class="section-index">01 / Overview</span><h2>What we built</h2></div>
+    <p class="intro">Quality inspection is a long chain of small steps: find the part, grasp it, show every face to a camera, judge it, put it in the right place. We built a robot that does the whole chain on its own, and that knows when it has not seen enough to decide.</p>
+    <div class="headline-stats">
+      <div><strong>9 / 9</strong><p>Pick–inspect–sort cycles finished in one unattended run on the real arm. The tray was cleared and no part was dropped.</p><small>That run judged parts with a simple dark-mark check; the learned inspector was deployed afterwards.</small></div>
+      <div><strong>0</strong><p>Defect labels used to fit the inspector. It learned normal appearance from 661 clean images.</p></div>
+      <div><strong>6.9×</strong><p>Closer match between simulated and real joint motion after the arm’s response was fitted from about a minute of movement.</p></div>
+      <div><strong>26.55<span> ms</span></strong><p>For one inspection on an Intel CPU through OpenVINO. No GPU anywhere in the system.</p><small>One recorded live prediction.</small></div>
     </div>
-  </div>
-</section>
-
-<section id="method">
-  <div class="wrap">
-    <h2>Method: one cycle, end to end</h2>
-    <p class="body">Each cycle runs the same auditable pipeline. The arm never acts on a detection
-    alone &mdash; it acts on a verified state estimate with a recorded provenance trail.</p>
-
-    <figure>
-      <video src="media/method.mp4" autoplay muted loop playsinline></video>
-      <figcaption>The cycle, animated: pick &rarr; 7-view plate-camera analysis &rarr; sort decision.</figcaption>
-    </figure>
-
-    <div class="pipeline">
-      <div class="pstage"><div class="ph">1 &middot; Perceive</div><div class="pt">Segment the plate</div>
-        <div class="pd">D415 point clouds split touching bricks by colour and footprint; clutter (hands, wires, trash) is rejected geometrically.</div></div>
-      <div class="pstage"><div class="ph">2 &middot; Localise</div><div class="pt">Name the brick</div>
-        <div class="pd">Catalog match over 4 DUPLO parts &times; stable poses; cuboid ICP gives a 6D pose &mdash; upright, side-lying or upside-down.</div></div>
-      <div class="pstage"><div class="ph">3 &middot; Grasp</div><div class="pt">Servo the jaws</div>
-        <div class="pd">The wrist camera tracks inner-jaw surfaces and trims the grasp to brick-centre before contact.</div></div>
-      <div class="pstage"><div class="ph">4 &middot; Inspect</div><div class="pt">7-view scan</div>
-        <div class="pd">The wrist sweeps the held brick through scheduled poses; PatchCore scores every frame in raw distance.</div></div>
-      <div class="pstage good"><div class="ph">5a &middot; Good</div><div class="pt">Green plate</div>
-        <div class="pd">All views valid, max distance below threshold &rarr; sorted good.</div></div>
-      <div class="pstage bad"><div class="ph">5b &middot; Defective</div><div class="pt">Pink plate</div>
-        <div class="pd">Flagged distance &rarr; rejected. Any untrusted view &rarr; safe stop, no sort.</div></div>
+    <div class="principles">
+      <article><span class="number">01</span><h3>It plans, then checks itself</h3><p>Each skill declares what must be true before it runs and what should be true afterwards. After every move the robot looks again. If the world disagrees with the plan, it replans or stops.</p></article>
+      <article><span class="number">02</span><h3>It moves by geometry, corrected by sight</h3><p>A calibrated model of the arm turns a target pose into joint angles. A camera on the wrist then nudges the gripper into line with the part before the jaws close.</p></article>
+      <article><span class="number">03</span><h3>It refuses to guess</h3><p>A part counts as clean only when every required view has been seen and scored. A missing, stale or uncertain view withholds the sort instead of passing the part.</p></article>
     </div>
-  </div>
-</section>
+  </section>
 
-<section id="perception">
-  <div class="wrap">
-    <h2>Perception: from point cloud to named brick</h2>
-    <p class="body">The overhead RealSense cloud is levelled against the table plane, the three KALAS
-    plate bowls are localised, and everything inside the source bowl is partitioned into bricks.
-    Clustered bricks are split by catalogue colour and footprint; each candidate is scored against
-    chromatic and geometric priors before a cuboid ICP fit returns part ID and 6D pose.</p>
-    <div class="grid2">
-      <figure><img src="media/real-top.jpg" alt="Overhead camera view of the physical sorting cell">
-        <figcaption>The physical station: source, good and defective plates around the SO-101.</figcaption></figure>
-      <figure><img src="media/duplo-parts.png" alt="DUPLO part catalogue">
-        <figcaption>The part catalogue &mdash; four DUPLO geometries across seven colours.</figcaption></figure>
+  <section class="section tinted" id="architecture">
+    <div class="shell">
+      <div class="section-heading"><span class="section-index">02 / Approach</span><h2>Symbols for deciding, skills for doing</h2></div>
+      <p class="intro">Our main inspiration is <a href="https://symskill.github.io/">SymSkill</a> (Shao et al., ICRA 2026). Its idea is to split a long task into two layers: a small set of symbols a planner can reason about, and closed-loop skills that make each symbol true. A monitor watches the symbols while the robot moves, so a failed step is caught and replanned.</p>
+      <div class="lineage">
+        <div><h3>What we took from SymSkill</h3><p>SymSkill aims to be compositional like task-and-motion planning, reactive like a learned policy, and checkable at both the plan and the skill level. In its reported RoboCasa results, turning the monitor off drops success from 85% to 65%. That is why every one of our skills is followed by a check.</p><p>SymSkill invents its symbols and skills from a few minutes of play data. We had days, not a dataset, so we wrote the symbols for this one task by hand and spent our learning budget where the task needed it: on appearance and on the arm’s dynamics.</p><a href="https://symskill.github.io/static/pdfs/SymSkill_ICRA_2026_Talk.pdf">SymSkill ICRA 2026 talk ↗</a></div>
+        <div class="operator-table-wrap"><table class="lineage-table"><caption>The same structure, adapted to an inspection cell</caption><thead><tr><th>Layer</th><th>SymSkill</th><th>This work</th></tr></thead><tbody>
+          <tr><th scope="row">Symbols</th><td>Predicates learned from play data</td><td>Hand-written for the task: part held, scan complete, part sorted</td></tr>
+          <tr><th scope="row">Skills</th><td>A learned stable motion policy per operator</td><td>Geometric skills: inverse kinematics plus wrist-camera correction</td></tr>
+          <tr><th scope="row">Monitor</th><td>Checks symbolic effects during execution and replans</td><td>Checks each skill’s expected effect before the planner advances</td></tr>
+          <tr><th scope="row">Learning</th><td>Symbols and skills</td><td>What “normal” looks like, and how the real arm responds</td></tr>
+        </tbody></table></div>
+      </div>
+      <div class="system-bands"><div><span>Observe</span><strong>Overhead + wrist cameras</strong><p>Find the part, then correct the gripper’s approach as it closes in.</p></div><i aria-hidden="true">→</i><div><span>Decide</span><strong>STRIPS-style task planner</strong><p>Pick the skill whose preconditions match what the cameras see now.</p></div><i aria-hidden="true">→</i><div><span>Act</span><strong>Geometric robot skills</strong><p>Pick, present, rotate and place, using the arm model and camera feedback.</p></div></div>
+      <div class="system-feedback"><strong>Execution feedback</strong><span>After every skill, compare what happened with what the skill promised. Advance only if they agree.</span></div>
+      <div class="text-columns"><p>The planner only chooses skills, and the inspector never moves the robot. That separation is what lets the same plan run on the physical arm and inside MuJoCo: only the skill executors change.</p><p>Inspection returns one of three answers: clean, anomalous or untrusted. Only trusted evidence and a completed scan can send a part to the “good” pile.</p></div>
+      <div class="operator-layout">
+        <div><h3>What the planner checks</h3><p>Before presenting a part, the planner confirms that it is actually held. Before sorting, it confirms that the scan is complete. A failed check triggers replanning or stops the run, so one bad grasp cannot cascade into a wrong sort.</p></div>
+        <div class="operator-table-wrap"><table class="operator-table"><caption>Selected operator effects</caption><thead><tr><th>Skill</th><th>Expected state after execution</th></tr></thead><tbody>
+          <tr><td>Pick</td><td>Part held</td></tr>
+          <tr><td>Present and rotate</td><td>Held + scan completed</td></tr>
+          <tr><td>Sort</td><td>Hand empty + sorted into selected pile</td></tr>
+        </tbody></table></div>
+      </div>
+      <aside id="studio-integration" class="studio-integration" aria-labelledby="studio-heading">
+        <a class="studio-banner" href="https://github.com/ecemguvener/JunctionHack/tree/main/physical-ai-studio" aria-label="View our Physical AI Studio integration"><img src="media/physical-ai-studio.png" width="1342" height="289" loading="lazy" alt="Physical AI Studio — VLA model fine-tuning for robotics"></a>
+        <div class="studio-context"><h3 id="studio-heading">Physical AI Studio integration</h3><div><p>The SO-101 extension brings the calibrated arm model, task state and inspection camera views into Physical AI Studio, connecting the robot model with inspection evidence.</p><a href="https://github.com/ecemguvener/JunctionHack/tree/main/physical-ai-studio">Explore the integration ↗</a></div></div>
+      </aside>
     </div>
-    <h3>Wrist-servoed grasps</h3>
-    <p class="body">Grasps are not open-loop. The wrist RGB camera sees the purple inner-jaw surfaces
-    and the brick between them; a corridor tracker trims X, Y and yaw until the brick is centred, then
-    a two-view parallax triangulation estimates true brick height before the jaws close.</p>
-    <figure>
-      <video src="media/pick.mp4" autoplay muted loop playsinline style="max-width:380px; margin:0 auto"></video>
-      <figcaption>Approach, jaw-corridor alignment and pick on the physical cell (1.5&times;).</figcaption>
-    </figure>
-  </div>
-</section>
+  </section>
 
-<section id="inspection">
-  <div class="wrap">
-    <h2>Inspection: calibrated anomaly distance</h2>
-    <p class="body">The held brick is swept through seven scheduled poses in front of the plate camera.
-    A PatchCore model &mdash; trained only on good bricks and calibrated on 707 real plate-camera
-    images &mdash; scores each view in raw patch distance. The decision compares the maximum view
-    distance against a validation-calibrated threshold:</p>
-    <div class="card" style="margin:24px 0">
-      <span class="mono">distance &lt; 2.453849</span> &rarr; <span class="pill" style="background:#e6f7f0;color:var(--good)">GOOD &rarr; green plate</span>
-      &nbsp;&nbsp;
-      <span class="mono">distance &ge; 2.453849</span> &rarr; <span class="pill" style="background:#fde7ee;color:var(--bad)">DEFECTIVE &rarr; pink plate</span>
-      <p class="note">Scores are raw patch distances, never probabilities. Missing, stale or duplicate
-      views, detector errors and timeouts all refuse to sort &mdash; the cycle stops instead of guessing.
-      Model <span class="mono">plate-calibrated-707-v1</span> &middot; threshold margin <span class="mono">0.002937</span>.</p>
+  <section class="section shell" id="data">
+    <div class="section-heading"><span class="section-index">03 / How it learned</span><h2>How it learned</h2></div>
+    <p class="intro">Nothing here was trained on a GPU or on a large dataset. The robot learned three things from small amounts of its own data: what a good part looks like, how its own motors really behave, and how a person would hold the part.</p>
+    <div class="learn-cards">
+      <article><span class="number">01 · Appearance</span><strong>661 <i>clean images</i></strong><h3>Learning “normal” without seeing a defect</h3><p>Collecting defects is slow and they never look the same twice. So the inspector was shown only good parts. A pretrained ResNet18 turns each image into patch features, and PatchCore keeps a compact memory of them (a 5% coreset). At run time, a patch that sits far from everything in that memory raises the anomaly score.</p><p class="small">Fit and threshold calibration: 349.56 s on four CPU threads of the Intel station.</p></article>
+      <article><span class="number">02 · Dynamics</span><strong>65 <i>seconds of motion</i></strong><h3>Learning how the real arm responds</h3><p>We swept all five arm joints through about 38° each and recorded what was commanded and what the encoders measured: 1,278 samples. Masses and inertias stayed at their published CAD values; only the actuator gains and the command delay were fitted. On a separate 55-second recording the simulator’s tracking error fell from 3.02° to 0.44°.</p><p class="small">Validation: 1,085 samples the fit never saw. Worst single-frame error 2.49°.</p></article>
+      <article><span class="number">03 · Demonstration</span><strong>2 <i>teleoperated runs</i></strong><h3>Learning the grasp from a person</h3><p>Two leader–follower demonstrations recorded in Physical AI Studio gave the skills their numbers: how wide to open before a grasp, how firmly to hold through the lift and spin, and the pose in which a part is shown to the camera. The planner then reuses those skills for every part.</p><p class="small">Parameters taken from the demonstrations; the skills themselves are geometric, not a learned policy.</p></article>
     </div>
-    <div class="grid2">
-      <figure><video src="media/scan.mp4" autoplay muted loop playsinline></video>
-        <figcaption>The wrist sweeping a brick through the scheduled views (1.4&times;).</figcaption></figure>
-      <figure><video src="media/sort.mp4" autoplay muted loop playsinline></video>
-        <figcaption>Release onto the sorted plate &mdash; decision and provenance logged per brick (1.3&times;).</figcaption></figure>
-    </div>
-  </div>
-</section>
+    <div class="data-summary"><div><strong>661</strong><span>clean images to learn from</span></div><div><strong>26</strong><span>images to set the threshold</span></div><div><strong>20</strong><span>images locked away for the final test</span></div></div>
+    <figure class="data-montage"><div class="media-label">Inspection sequence · 48 sampled recording frames</div><img src="media/inspection-montage.jpg" width="1938" height="824" loading="lazy" alt="Contact sheet of 48 frames showing the held part being presented and rotated at the inspection station"></figure>
+    <div class="text-columns"><div><h3>What the inspector saw</h3><p>Every fitting image is a real camera frame of a clean part: plate-camera views and side-view crops, resized to 128 × 128. No synthetic images and no defective parts went into the reference memory.</p></div><div><h3>Keeping the test honest</h3><p>The threshold was set on 14 clean and 12 defective images, then frozen. The final test used 16 clean and 4 defective images of parts the model had never seen. Splits are separated by object and by capture session, and duplicate images are rejected by hash, so the test cannot leak into the fit.</p></div></div>
+    <div class="data-footnote"><strong>Every number is traceable</strong><p>Each capture, fit and evaluation is logged with dataset hashes, package versions and what was not tested.</p><a href="https://github.com/ecemguvener/JunctionHack/blob/main/docs/VALIDATION.md">Capture provenance and validation record ↗</a></div>
+  </section>
 
-<section id="twin">
-  <div class="wrap">
-    <h2>Digital twin: one depth camera, a full 3D cell</h2>
-    <p class="body">The MuJoCo twin was fitted to the real station &mdash; measured camera extrinsics,
-    published CAD masses and inertias, KALAS plate geometry, and the same perception code running on
-    synthesised clouds. Whole pick&ndash;inspect&ndash;sort cycles were exercised in the twin, and the
-    live arm state mirrors into it read-only, before any motion was trusted on hardware.</p>
-    <figure>
-      <video src="media/twin.mp4" autoplay muted loop playsinline></video>
-      <figcaption>Left: recorded depth of the real station. Right: the reconstructed 3D twin tracking it live.</figcaption>
-    </figure>
-    <div class="grid2">
-      <figure><img src="media/sim-top.jpg" alt="MuJoCo twin overhead render">
-        <figcaption>Overhead render inside the fitted twin.</figcaption></figure>
-      <div class="card">
-        <h3>What the twin carries over</h3>
-        <p style="color:var(--soft); font-size:14.5px; line-height:1.6">
-        Calibrated Top/Plate camera poses measured on the real station &middot; arm dynamics fitted to
-        published CAD (0.436&deg; validation RMS, down from 3.02&deg;) &middot; plate and brick geometry
-        with the same segmentation thresholds &middot; the identical <span class="mono">Real2Sim</span>
-        perception stack running on synthesised D415 clouds.</p>
+  <section class="section tinted" id="perception">
+   <div class="shell">
+    <div class="section-heading"><span class="section-index">04 / Perception and control</span><h2>Seeing the part, then closing on it</h2></div>
+    <p class="intro">An overhead camera finds the part and works out which way it is lying. A camera on the wrist takes over for the last few centimetres and steers the jaws into line before they close.</p>
+    <div class="grasp-layout">
+      <figure><video id="grasp-video" src="media/grasp-motion.mp4" poster="media/grasp-motion.jpg" muted loop playsinline preload="none" controls aria-label="Physical robot approaching, aligning and grasping a part"></video></figure>
+      <ol class="grasp-steps">
+        <li><h3>Locate the part</h3><p>Depth measurements place visible surfaces in the robot’s coordinate system. Removing the table and bowls leaves candidate parts.</p></li>
+        <li><h3>Estimate its orientation</h3><p>Iterative closest point alignment fits a box-shaped model to the measured surface points, refining the estimated position and orientation.</p></li>
+        <li><h3>Align the gripper</h3><p>The wrist image shows the part between the jaws. Small position and rotation corrections align the grasp; the apparent motion between two views helps estimate height.</p></li>
+      </ol>
+    </div>
+    <div class="reconstruction-layout"><figure><video id="reconstruction-video" src="media/digital-twin.mp4" poster="media/digital-twin.jpg" muted loop playsinline preload="none" controls aria-label="Recorded camera views and depth reconstruction"></video></figure><div><h3>Geometry from the cameras</h3><p>Calibrated camera poses place every depth measurement in the robot’s own coordinate system, so a part seen by a camera becomes a pose the arm can reach for.</p></div></div>
+   </div>
+  </section>
+
+  <section class="section shell" id="simulation">
+    <div>
+      <div class="section-heading"><span class="section-index">05 / Digital twin</span><h2>A physics twin, rebuilt from one phone video</h2></div>
+      <p class="intro">Drag the slider: the right side is a handheld phone recording of the real arm, the left is MuJoCo. We recovered the camera’s position in all 979 frames from the rims of the three plates, fitted the arm’s joint motion to its outline, and replayed that motion as motor commands. Nothing is glued to the gripper. The part stays in the jaws through the lift, carry and roll because of contact and friction alone.</p>
+      <div class="comparison-toolbar"><span>Approach, pickup and rotation</span><button id="comparison-toggle" type="button" aria-label="Pause comparison">Pause</button><button id="comparison-restart" type="button">Restart</button></div>
+      <figure class="geometry-comparison">
+        <div class="geometry-wipe video-wipe" id="robot-comparison" style="--reveal:70%">
+          <video class="matched-real" id="matched-real-video" src="media/physics-reconstructed-real.mp4?v=14" poster="media/physics-reconstructed-real.jpg?v=14" muted loop playsinline preload="metadata" aria-label="Physical robot lowering and adjusting the gripper, then lifting and rotating the block"></video>
+          <video class="matched-sim" id="matched-sim-video" src="media/physics-reconstructed-sim.mp4?v=14" poster="media/physics-reconstructed-sim.jpg?v=14" muted loop playsinline preload="metadata" aria-label="MuJoCo reconstruction of the same descent, adjustment, pickup and rotation"></video>
+          <span class="wipe-tag sim-tag">SIM · physics reconstruction</span><span class="wipe-tag real-tag">REAL · recorded sequence</span>
+          <div class="wipe-line" aria-hidden="true"><span>↔</span></div>
+        </div>
+        <div class="wipe-control"><label for="geometry-reveal">Drag to compare</label><input id="geometry-reveal" type="range" min="0" max="100" value="70" aria-label="Reveal the MuJoCo reconstruction over the recorded motion"></div>
+      </figure>
+      <div class="twin-facts"><div><strong>979</strong><span>video frames tracked, with no joint log to lean on</span></div><div><strong>100<i>%</i></strong><span>of carry frames with both jaws in contact with the part</span></div><div><strong>0</strong><span>welds, attachments or scripted forces holding the part</span></div><div><strong>≈ 1<i> cm</i></strong><span>mean difference in where the part sits on the plate before the lift</span></div></div>
+      <p class="small twin-note">The twin is an estimate from a single camera, not an exact replay: depth along the camera’s line of sight is weakly observed, and before the lift the simulated part moves less than the real one (11.7 mm mean difference).</p>
+      <div class="sim-detail"><figure><div class="media-label">Physical camera reconstruction</div><video id="twin-video" src="media/camera-reconstruction.mp4" poster="media/camera-reconstruction.jpg" muted loop playsinline preload="none" controls aria-label="Physical camera views alongside their depth reconstruction"></video></figure><div><h3>Why bother with a twin</h3><p>A plan that fails in simulation never has to fail on hardware. The same planner and skill interface drive both the real arm and the MuJoCo scene, so a new skill can be rehearsed against contact physics before it touches a part.</p><p>The scene is built from measurements: camera poses, plate positions and the robot’s CAD model, with the motor response fitted to the real arm.</p></div></div>
+      <div class="identification-result">
+        <div class="fit-value"><span>Tracking error on motion the fit never saw</span><strong>3.023° <span aria-hidden="true">→</span> 0.436°</strong><small>Default motor gains → gains and delay fitted to the real arm</small></div>
+        <div><h3>Teaching the simulator how this arm moves</h3><p>Out of the box, the simulated joints were about 3° (RMS) away from the real ones. After fitting gains and command delay to 65 seconds of recorded motion, the error on a separate recording is under half a degree: 6.9 times closer. Masses and inertias were left at their published values, so the fit could not hide a wrong model behind tuned weights.</p></div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<section id="runtime">
-  <div class="wrap">
-    <h2>Runtime</h2>
-    <p class="body">Everything runs on CPUs &mdash; the arm controller, the perception stack and the
-    OpenVINO anomaly model. Numbers below are labeled by where they were actually measured; synthetic
-    and mock results are marked as such.</p>
-    <table class="perf">
-      <tr><th>Metric</th><th>Value</th><th>Measured on</th></tr>
-      <tr><td>PatchCore OpenVINO inference</td><td><b>5.17 ms</b> mean &middot; 5.24 p50 &middot; 5.66 p95</td><td>CPU, <span class="mono">infer()</span> only, 30 calls</td></tr>
-      <tr><td>Real2Sim perception</td><td><b>128.6 ms</b> / frame</td><td>Live D415 clouds, 8,738 pts/frame</td></tr>
-      <tr><td>Arm state mirror</td><td>read-only, live <span class="mono">q_enc_rad</span> &rarr; twin</td><td>Physical SO-101 via <span class="mono">armd</span></td></tr>
-      <tr><td>Camera streams</td><td>640&times;480 @ 15 fps per D415 &middot; 1080p30 wrist</td><td>Physical station</td></tr>
-      <tr><td>Unit tests</td><td><b>51 passed</b></td><td>Intel server</td></tr>
-      <tr><td>Arm kinematics fit</td><td><b>0.436&deg;</b> validation RMS (from 3.02&deg;)</td><td>Published CAD priors fit</td></tr>
-      <tr><td>Held-out synthetic test</td><td>TN=6 &middot; TP=6 &middot; FP=0 &middot; FN=0</td><td>Software check &mdash; not a real-defect result</td></tr>
-    </table>
-    <p class="note">Mock and synthetic results are labeled; no real-defect accuracy is claimed beyond them.</p>
-  </div>
-</section>
-
-<section id="loop">
-  <div class="wrap">
-    <h2>The closed loop</h2>
-    <div class="grid3">
-      <div class="card"><h3>Perception</h3>
-        <p style="color:var(--soft);font-size:14.5px">Point-cloud segmentation, catalog ICP, clutter rejection &mdash; a verified world state, not a raw frame.</p></div>
-      <div class="card"><h3>Inspection</h3>
-        <p style="color:var(--soft);font-size:14.5px">Calibrated PatchCore on 7 required views; distance vs. threshold with provenance on every record.</p></div>
-      <div class="card"><h3>Control</h3>
-        <p style="color:var(--soft);font-size:14.5px">5-DOF analytical IK, jaw-corridor servoing, bounded waits and a safe stop on anything untrusted.</p></div>
+  <section class="section tinted" id="inspection">
+   <div class="shell">
+    <div class="section-heading"><span class="section-index">06 / Inspection</span><h2>An inspector that knows only “normal”</h2></div>
+    <p class="intro">The inspector has never been shown a defect. It holds a memory of what clean surfaces look like and measures how far each new patch of image falls from it. The further away, the higher the anomaly score.</p>
+    <div class="model-layout">
+      <div class="model-diagram" role="img" aria-label="Clean training images pass through pretrained ResNet18 into a PatchCore reference bank. At inference, an inspection image passes through the same features, nearest-neighbour distance scoring and a calibrated decision gate. Scan coverage and valid evidence are required for accepting or rejecting a part.">
+        <div class="diagram-track training-track"><span class="track-label">Fit on clean images</span><div class="model-node"><strong>661 clean images</strong><small>128 × 128 input</small></div><span class="flow-arrow" aria-hidden="true">→</span><div class="model-node"><strong>ResNet18 features</strong><small>Pretrained · layers 2 + 3</small></div><span class="flow-arrow" aria-hidden="true">→</span><div class="model-node reference-node"><strong>Reference memory</strong><small>5% coreset of patch features</small></div></div>
+        <div class="diagram-track inference-track"><span class="track-label">Inspect each view</span><div class="model-node"><strong>Camera frame</strong><small>Presented surface</small></div><span class="flow-arrow" aria-hidden="true">→</span><div class="model-node"><strong>PatchCore distance</strong><small>ResNet18 features → clean memory</small></div><span class="flow-arrow" aria-hidden="true">→</span><div class="model-node gate-node"><strong>Decision gate</strong><small>Calibrated threshold + margin</small></div></div>
+        <div class="diagram-outcomes"><span>Clean evidence</span><span>Anomalous evidence</span><span>Untrusted → withhold sort</span></div>
+        <div class="diagram-monitor">Scan ledger: required views must be present, current and valid before a clean decision can complete the inspection.</div>
+      </div>
+      <div class="model-training"><h3>What was fitted</h3><table><tbody><tr><th scope="row">Feature extractor</th><td>Pretrained ResNet18</td></tr><tr><th scope="row">Reference bank</th><td>Clean-image patch features</td></tr><tr><th scope="row">Nearest neighbours</th><td>3</td></tr><tr><th scope="row">Threshold calibration</th><td>26 validation images</td></tr><tr><th scope="row">Fit + calibration</th><td>349.56 s on CPU</td></tr><tr><th scope="row">Deployment</th><td>OpenVINO CPU</td></tr></tbody></table><p class="small">Anomalib 2.7.0 · PyTorch 2.10.0+cpu · OpenVINO 2026.4.1. Scores are feature-space distances, not probabilities.</p></div>
     </div>
-    <p class="body" style="margin-top:28px">Every sort lands in a JSON dossier: executed operator trace,
-    per-view distances, the model and threshold version that decided, and why. A live dashboard streams
-    the same state &mdash; decision-explainable by construction.</p>
-  </div>
-</section>
+    <div class="model-metrics"><div><strong>65<span>%</span></strong><p>Held-out image accuracy<br><small>13 / 20 correctly classified</small></p></div><div><strong>25<span>%</span></strong><p>Held-out defect recall<br><small>1 / 4 defects detected</small></p></div><div><strong>75<span>%</span></strong><p>Held-out clean specificity<br><small>12 / 16 clean images accepted</small></p></div><div><strong>26.55<span> ms</span></strong><p>Recorded CPU prediction<br><small>One live plate-camera observation</small></p></div></div>
+    <div class="model-evaluation"><div><h3>What the locked test told us</h3><p>We froze the threshold before opening the test set, then reported what came back. The model caught all 12 defects it was calibrated on and 1 of 4 on parts it had never seen. Twenty images is a small test, but the message is clear: the pipeline, export and safety gating work end to end, and the reference memory needs more varied clean captures before the detector generalises.</p><div class="recall-bars" role="img" aria-label="Defect recall: validation 100 percent, held-out test 25 percent"><div><span>Validation · 12 / 12</span><div class="bar-track"><i style="width:100%"></i></div><b>100%</b></div><div><span>Test · 1 / 4</span><div class="bar-track"><i style="width:25%"></i></div><b>25%</b></div></div><p class="small">Image-level evaluation on the plate model; this does not measure physical sorting success.</p></div><table class="confusion-matrix"><caption>Held-out test · 20 images · frozen threshold</caption><thead><tr><th>Actual class</th><th>Predicted clean</th><th>Predicted defective</th></tr></thead><tbody><tr><th scope="row">Clean</th><td>12</td><td>4</td></tr><tr><th scope="row">Defective</th><td>3</td><td>1</td></tr></tbody></table></div>
+    <div class="scan-layout"><figure><video id="scan-video" src="media/scan-motion.mp4" poster="media/scan-motion.jpg" muted loop playsinline preload="none" controls aria-label="Part being rotated at the inspection camera"></video></figure><div class="scan-copy"><h3>Seven views, and a ledger that keeps count</h3><p>One photo cannot clear a part with six faces. The arm rolls the held part through seven scheduled views, and a ledger records which ones were actually seen and scored.</p><p>An invalid view, an uncertain score, a stale result or a detector fault all withhold the sort. One trusted anomaly is enough to reject a part; a clean verdict needs the whole scan.</p><p class="small">Threshold 2.453849 · uncertainty margin ±0.002937. Calibrated for the plate camera; an independent wrist model has not been validated.</p><a href="https://github.com/ecemguvener/JunctionHack/blob/main/docs/VALIDATION.md">Training and evaluation record ↗</a></div></div>
+   </div>
+  </section>
 
-<footer>
-  <div class="wrap">
-    <div class="links">
-      <a href="https://github.com/ecemguvener/JunctionHack">Code</a>
-      <a href="https://github.com/ecemguvener/JunctionHack/blob/main/docs/VALIDATION.md">Validation log</a>
-      <a href="https://github.com/ecemguvener/JunctionHack/blob/main/README.md">README</a>
+  <section class="section shell" id="runtime">
+    <div>
+      <div class="section-heading"><span class="section-index">07 / Runtime</span><h2>Fast enough on a CPU</h2></div>
+      <p class="intro">Inspection runs on the Intel station’s processor, with no accelerator. The inspector is trained in PyTorch, exported to OpenVINO, and checked to give the same scores after export, to within two parts in a million.</p>
+      <div class="runtime-layout"><div class="runtime-observation"><strong>26.55<span> ms</span></strong><p>OpenVINO CPU prediction</p><small>One recorded plate-camera frame; full-cycle throughput was not measured.</small></div><table class="runtime-table"><caption>Execution and export checks</caption><thead><tr><th>Stage</th><th>Observation</th><th>Scope</th></tr></thead><tbody><tr><th scope="row">Anomaly inference</th><td>26.55 ms</td><td>One live CPU prediction</td></tr><tr><th scope="row">Depth perception</th><td>128.6 ms</td><td>One overhead cloud, 8,738 points</td></tr><tr><th scope="row">Export score difference</th><td>1.67 × 10⁻⁶</td><td>Maximum absolute difference on validation</td></tr></tbody></table></div>
+      <p class="source-note">Recorded evidence: <a href="https://github.com/ecemguvener/JunctionHack/blob/main/docs/VALIDATION.md#partitioned-plate-only-patchcore-calibration-openvino-export-parity--test-evaluation-on-intel--2026-11-15">model calibration and test evaluation</a> · <a href="https://github.com/ecemguvener/JunctionHack/blob/main/docs/VALIDATION.md">deployment, perception and dynamics validation</a>.</p>
     </div>
-    <p>Built at the Intel Physical AI Challenge, Junction 2026, by a team from the University of
-    Manchester and the Royal College of Art.</p>
-    <p style="margin-top:8px">University and Intel logos are trademarks of their owners, shown as
-    affiliation marks.</p>
-  </div>
-</footer>
+  </section>
 
+  <section class="section tinted" id="open-source">
+   <div class="shell">
+    <div class="section-heading"><h2>Open source</h2></div>
+    <p class="intro">Everything is public, including the validation log with the results that did not go our way. Our SO-101 integration is also proposed upstream to Intel’s Physical AI Studio.</p>
+    <div class="source-cards"><a href="https://github.com/open-edge-platform/physical-ai-studio/pull/1425"><span>Physical AI Studio contribution · PR #1425</span><strong>SO-101 Manipulation Studio <i aria-hidden="true">↗</i></strong></a><a href="https://github.com/ecemguvener/JunctionHack"><span>Code</span><strong>ecemguvener/JunctionHack <i aria-hidden="true">↗</i></strong></a></div>
+   </div>
+  </section>
+</main>
+<footer class="shell"><div class="footer-top"><a class="brand" href="#top">Junction 2026</a><a href="https://github.com/ecemguvener/JunctionHack/blob/main/docs/VALIDATION.md">Validation record ↗</a></div><p>Intel Physical AI Challenge · Junction 2026</p><p class="small">Physical demonstration clips omit waiting intervals and retain native motion speed. <a href="media-edits.json">Media provenance</a>. Intel logo © Intel Corporation.</p></footer>
 </body>
 </html>
